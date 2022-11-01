@@ -180,7 +180,7 @@ drawmenu(void)
 {
 	unsigned int curpos;
 	struct item *item;
-	int x = 0, y = 0, w;
+    int x = 0, y = 0, fh = drw->fonts->h, w;
  char *censort;
 
 	drw_setscheme(drw, scheme[SchemeNorm]);
@@ -203,7 +203,7 @@ drawmenu(void)
 	curpos = TEXTW(text) - TEXTW(&text[cursor]);
 	if ((curpos += lrpad / 2 - 1) < w) {
 		drw_setscheme(drw, scheme[SchemeNorm]);
-		drw_rect(drw, x + curpos, 2, 2, bh - 4, 1, 0);
+		drw_rect(drw, x + curpos, 2 + (bh - fh) / 2, 2, fh - 4, 1, 0);
 	}
 
 	if (lines > 0) {
@@ -799,6 +799,7 @@ setup(void)
 
 	/* calculate menu geometry */
 	bh = drw->fonts->h + 2;
+	bh = MAX(bh,lineheight);	/* make a menu line AT LEAST 'lineheight' tall */
 	lines = MAX(lines, 0);
 	mh = (lines + 1) * bh;
 #ifdef XINERAMA
@@ -882,8 +883,8 @@ setup(void)
 static void
 usage(void)
 {
-	fputs("usage: dmenu [-bfiPrv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
-	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n", stderr);
+    fputs("usage: dmenu [-bfiv] [-l lines] [-h height] [-p prompt] [-fn font] [-m monitor]\n"
+          "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n", stderr);
 	exit(1);
 }
 
@@ -918,21 +919,6 @@ main(int argc, char *argv[])
 	XWindowAttributes wa;
 	int i, fast = 0;
 
-	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
-		fputs("warning: no locale support\n", stderr);
-	if (!(dpy = XOpenDisplay(NULL)))
-		die("cannot open display");
-	screen = DefaultScreen(dpy);
-	root = RootWindow(dpy, screen);
-	if (!embed || !(parentwin = strtol(embed, NULL, 0)))
-		parentwin = root;
-	if (!XGetWindowAttributes(dpy, parentwin, &wa))
-		die("could not get embedding window attributes: 0x%lx",
-		    parentwin);
-	xinitvisual();
-	drw = drw_create(dpy, screen, root, wa.width, wa.height, visual, depth, cmap);
-	read_Xresources();
-
 	for (i = 1; i < argc; i++)
 		/* these options take no arguments */
 		if (!strcmp(argv[i], "-v")) {      /* prints version information */
@@ -954,6 +940,10 @@ main(int argc, char *argv[])
 		/* these options take one argument */
 		else if (!strcmp(argv[i], "-l"))   /* number of lines in vertical list */
 			lines = atoi(argv[++i]);
+		else if (!strcmp(argv[i], "-h")) { /* minimum height of one menu line */
+			lineheight = atoi(argv[++i]);
+			lineheight = MAX(lineheight, min_lineheight);
+		}
 		else if (!strcmp(argv[i], "-m"))
 			mon = atoi(argv[++i]);
 		else if (!strcmp(argv[i], "-p"))   /* adds prompt to left of input field */
@@ -973,6 +963,20 @@ main(int argc, char *argv[])
 		else
 			usage();
 
+	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
+		fputs("warning: no locale support\n", stderr);
+	if (!(dpy = XOpenDisplay(NULL)))
+		die("cannot open display");
+	screen = DefaultScreen(dpy);
+	root = RootWindow(dpy, screen);
+	if (!embed || !(parentwin = strtol(embed, NULL, 0)))
+		parentwin = root;
+	if (!XGetWindowAttributes(dpy, parentwin, &wa))
+		die("could not get embedding window attributes: 0x%lx",
+		    parentwin);
+	xinitvisual();
+	drw = drw_create(dpy, screen, root, wa.width, wa.height, visual, depth, cmap);
+	read_Xresources();
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
 	lrpad = drw->fonts->h;
@@ -994,4 +998,3 @@ main(int argc, char *argv[])
 
 	return 1; /* unreachable */
 }
-
