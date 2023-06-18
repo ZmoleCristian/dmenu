@@ -1,3 +1,3 @@
 #!/bin/sh
 aplay ~/.local/share/soundFX/info.wav & disown
-dmenu_path | dmenu -l 10 "$@" | ${SHELL:-"/bin/sh"} &
+dmenu_path | dmenu -c -l 10 "$@" | ${SHELL:-"/bin/sh"} &
