@@ -3,7 +3,7 @@
 
 static int topbar = 0;                      /* -b  option; if 0, dmenu appears at bottom     */
 /* -fn option overrides fonts[0]; default X11 font or font set */
-static char *fonts[] = {
+static const char *fonts[] = {
         "terminus:size=14:style=Bold",
         "NotoColorEmoji:pixelsize=32:antialias=true:autohint=true",
         "Font Awesome 6 Free:style=Regular:pixelsize=34:antialias=true:autohint=true",
